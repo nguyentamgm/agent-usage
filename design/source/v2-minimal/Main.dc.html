@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Coding agents AOD – Overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=Silkscreen&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000}
+.px{-webkit-font-smoothing:none;-moz-osx-font-smoothing:auto;font-smooth:never;font-kerning:none;text-rendering:optimizeSpeed}
+.blink{animation:blink 1.2s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.track{background-image:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 8px)}
+</style>
+</helmet>
+<div class="px" style="width: 412px; height: 915px; box-sizing: border-box; background: #000000; color: {{amber}}; overflow: hidden; font-family: 'Silkscreen', monospace; font-size: 16px; line-height: 16px; padding: 88px 40px 64px; display: flex; flex-direction: column">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 16px">
+<div style="font-family: 'Press Start 2P', monospace; font-size: 16px; line-height: 16px">{{time}}</div>
+<div>{{date}}</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 64px">
+<sc-for list="{{agents}}" as="a" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+<div>{{a.name}}</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<sc-if value="{{a.filled}}" hint-placeholder-val="{{true}}"><div class="{{a.blinkCls}}" style="width: 8px; height: 8px; background: currentColor"></div></sc-if>
+<sc-if value="{{a.outline}}" hint-placeholder-val="{{false}}"><div style="width: 8px; height: 8px; box-sizing: border-box; border: 2px solid currentColor"></div></sc-if>
+<div>{{a.status}}</div>
+</div>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: flex-end">
+<div style="font-family: 'Press Start 2P', monospace; font-size: 32px; line-height: 32px">{{a.hero}}</div>
+<div>{{a.heroSub}}</div>
+</div>
+<div style="position: relative; height: 4px">
+<div class="track" style="position: absolute; left: 0; right: 0; top: 1px; height: 2px"></div>
+<div style="position: absolute; left: 0; top: 0; height: 4px; width: {{a.barW}}; background: currentColor"></div>
+</div>
+<div style="display: flex; justify-content: space-between">
+<div>{{a.weekLine}}</div>
+<div>{{a.weekReset}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"amber":{"editor":"color","default":"#E8A33D","options":["#E8A33D","#FFB000","#C98A2E","#F2C14E"]},"showClaude":{"editor":"boolean","default":true,"section":"Agents"},"showCodex":{"editor":"boolean","default":true,"section":"Agents"},"showAntigravity":{"editor":"boolean","default":true,"section":"Agents"},"$preview":{"width":412,"height":915}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.start = Date.now();
+    this.timer = setInterval(() => this.setState({ now: new Date() }), 1000);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+  agentData() {
+    return [
+      { key: 'claude', name: 'CLAUDE CODE', mode: 'working', status: 'WORKING', five: 42, week: 61, fiveReset: '2H07M', weekReset: 'MON' },
+      { key: 'codex', name: 'CODEX', mode: 'idle', status: 'IDLE', five: 12, week: 35, fiveReset: '4H31M', weekReset: 'SAT' },
+      { key: 'antigravity', name: 'ANTIGRAVITY', mode: 'idle', status: 'IDLE', five: 67, week: 48, fiveReset: '1H22M', weekReset: 'TUE' }
+    ];
+  }
+  renderVals() {
+    const d = (this.state && this.state.now) || new Date();
+    const start = this.start || d.getTime();
+    const p2 = (x) => String(x).padStart(2, '0');
+    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const mons = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const full = 332;
+    const barW = (p) => Math.round(p / 100 * full / 2) * 2 + 'px';
+    const show = {
+      claude: this.props.showClaude ?? true,
+      codex: this.props.showCodex ?? true,
+      antigravity: this.props.showAntigravity ?? true
+    };
+    const agents = this.agentData().filter((a) => show[a.key]).map((a) => {
+      const base = {
+        name: a.name,
+        filled: a.mode !== 'idle',
+        outline: a.mode === 'idle',
+        blinkCls: a.mode === 'idle' ? '' : 'blink',
+        weekReset: 'RESETS ' + a.weekReset
+      };
+      if (a.mode === 'limit') {
+        const reset = new Date(start + a.limitSecs * 1000);
+        const left = Math.max(0, Math.floor((reset.getTime() - d.getTime()) / 1000));
+        return Object.assign(base, {
+          status: 'BACK ' + p2(reset.getHours()) + ':' + p2(reset.getMinutes()),
+          hero: p2(Math.floor(left / 3600)) + ':' + p2(Math.floor(left % 3600 / 60)) + ':' + p2(left % 60),
+          heroSub: '',
+          barW: full + 'px',
+          weekLine: 'WEEK ' + a.week + '%'
+        });
+      }
+      if (a.five === null) {
+        return Object.assign(base, { status: a.status, hero: a.week + '%', heroSub: 'WEEK', barW: barW(a.week), weekLine: '' });
+      }
+      return Object.assign(base, {
+        status: a.status,
+        hero: a.five + '%',
+        heroSub: '5H RESET ' + a.fiveReset,
+        barW: barW(a.five),
+        weekLine: 'WEEK ' + a.week + '%'
+      });
+    });
+    return {
+      amber: this.props.amber ?? '#E8A33D',
+      time: p2(d.getHours()) + ':' + p2(d.getMinutes()),
+      date: days[d.getDay()] + ' ' + p2(d.getDate()) + ' ' + mons[d.getMonth()] + ' ' + d.getFullYear(),
+      agents: agents
+    };
+  }
+}
+</script>
+</body>
+</html>
