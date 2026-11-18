@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-18T14:43:00Z",
+  "agents": [
+    {
+      "id": "claude-code",
+      "name": "CLAUDE CODE",
+      "active": true,
+      "lastActivityAt": "2026-11-18T14:42:41Z",
+      "windows": {
+        "fiveHour": { "usedPercent": 42, "resetsAt": "2026-11-18T16:50:00Z" },
+        "weekly": { "usedPercent": 61, "resetsAt": "2026-11-23T00:00:00Z" }
+      },
+      "group": null,
+      "dataAt": "2026-11-18T14:43:00Z",
+      "source": "claude-oauth-usage",
+      "error": null
+    },
+    {
+      "id": "codex",
+      "name": "CODEX",
+      "active": false,
+      "lastActivityAt": "2026-11-18T12:10:05Z",
+      "windows": {
+        "fiveHour": null,
+        "weekly": { "usedPercent": 35, "resetsAt": "2026-11-21T02:00:00Z" }
+      },
+      "group": null,
+      "dataAt": "2026-11-18T12:10:05Z",
+      "source": "codex-session-log",
+      "error": null
+    },
+    {
+      "id": "antigravity",
+      "name": "ANTIGRAVITY",
+      "active": false,
+      "lastActivityAt": "2026-11-18T14:20:11Z",
+      "windows": {
+        "fiveHour": { "usedPercent": 100, "resetsAt": "2026-11-18T15:55:45Z" },
+        "weekly": { "usedPercent": 48, "resetsAt": "2026-11-24T08:00:00Z" }
+      },
+      "group": "GEMINI PRO",
+      "dataAt": "2026-11-18T14:42:30Z",
+      "source": "antigravity-local-ls",
+      "error": null
+    }
+  ]
+}

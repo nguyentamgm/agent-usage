@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nguyentamgm/agent-usage/shared/usage-snapshot.schema.json",
+  "title": "UsageSnapshot",
+  "description": "What the collector (on the dev computer) serves to the Android app. Raw facts only: the app derives status (working / idle / near_limit / limited / stale / unknown). Never contains credentials.",
+  "type": "object",
+  "required": ["version", "generatedAt", "agents"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "generatedAt": { "type": "string", "format": "date-time", "description": "When the collector built this snapshot (UTC)." },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent" }
+    }
+  },
+  "$defs": {
+    "window": {
+      "type": "object",
+      "required": ["usedPercent", "resetsAt"],
+      "additionalProperties": false,
+      "properties": {
+        "usedPercent": { "type": "number", "minimum": 0, "description": "0-100+. May exceed 100 briefly; clamp for display." },
+        "resetsAt": { "type": ["string", "null"], "format": "date-time", "description": "When this window resets (UTC). Null if unknown." }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "required": ["id", "name", "windows", "dataAt", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "enum": ["claude-code", "codex", "antigravity"], "description": "Stable id. Extend the enum when adding an agent." },
+        "name": { "type": "string", "description": "Display name, uppercase ASCII (pixel fonts are Latin-only)." },
+        "active": { "type": "boolean", "description": "Agent did work recently (collector heuristic, ~60 s)." },
+        "lastActivityAt": { "type": ["string", "null"], "format": "date-time" },
+        "windows": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fiveHour": { "oneOf": [{ "$ref": "#/$defs/window" }, { "type": "null" }], "description": "Null when the plan has no 5-hour window." },
+            "weekly": { "oneOf": [{ "$ref": "#/$defs/window" }, { "type": "null" }] }
+          }
+        },
+        "group": { "type": ["string", "null"], "description": "Optional sub-bucket shown to the user, e.g. the Antigravity model group the numbers belong to." },
+        "dataAt": { "type": ["string", "null"], "format": "date-time", "description": "When the numbers were measured at the source (may be older than generatedAt, e.g. last Codex session log)." },
+        "source": { "type": "string", "description": "Which reader produced it, e.g. claude-oauth-usage, codex-session-log, antigravity-local-ls." },
+        "error": { "type": ["string", "null"], "description": "Short machine-readable error if the reader failed (then windows may be null)." }
+      }
+    }
+  }
+}

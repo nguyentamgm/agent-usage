@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>V1 LED – Limit reached</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000}
+.glow{text-shadow:0 0 7px color-mix(in srgb, currentColor 55%, transparent);-webkit-font-smoothing:none;font-smooth:never}
+.blink{animation:blink 1.2s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.dash{background-image:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 8px)}
+</style>
+</helmet>
+<div class="glow" style="width: 412px; height: 915px; box-sizing: border-box; background: #000000; color: {{amber}}; position: relative; overflow: hidden; font-family: 'Silkscreen', monospace; padding: 72px 32px 56px; display: flex; flex-direction: column; gap: 36px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 12px">
+<div style="font-family: 'Press Start 2P', monospace; font-size: 18px; letter-spacing: 2px">{{time}}</div>
+<div style="font-size: 14px; letter-spacing: 3px">{{date}}</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div class="dash" style="height: 4px; margin-bottom: 4px"></div>
+<div style="display: flex; justify-content: space-between; align-items: center; letter-spacing: 1px">
+<div style="font-size: 16px; font-weight: 700">ANTIGRAVITY</div>
+<div class="blink" style="display: flex; align-items: center; gap: 8px; font-size: 14px"><div style="width: 8px; height: 8px; background: currentColor"></div><div>LIMIT HIT</div></div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px 0 8px">
+<div style="font-size: 14px; letter-spacing: 2px">5H QUOTA RESETS IN</div>
+<div style="font-family: 'Press Start 2P', monospace; font-size: 40px; line-height: 1">{{countdown}}</div>
+<div style="font-size: 14px; letter-spacing: 2px">AT {{resetAt}} / WK 48%</div>
+</div>
+</div>
+<sc-for list="{{agents}}" as="a" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div class="dash" style="height: 4px; margin-bottom: 4px"></div>
+<div style="display: flex; justify-content: space-between; align-items: center; letter-spacing: 1px">
+<div style="font-size: 16px; font-weight: 700">{{a.name}}</div>
+<div class="{{a.blinkCls}}" style="display: flex; align-items: center; gap: 8px; font-size: 14px">
+<sc-if value="{{a.filled}}" hint-placeholder-val="{{true}}"><div style="width: 8px; height: 8px; background: currentColor"></div></sc-if>
+<sc-if value="{{a.outline}}" hint-placeholder-val="{{false}}"><div style="width: 8px; height: 8px; box-sizing: border-box; border: 2px solid currentColor"></div></sc-if>
+<div>{{a.status}}</div>
+</div>
+</div>
+<sc-if value="{{a.hasFive}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 24px; flex-shrink: 0; font-size: 14px">5H</div>
+<div style="flex: 1; display: flex; gap: 3px">
+<sc-for list="{{a.fiveCells}}" as="c" hint-placeholder-count="20">
+<sc-if value="{{c.on}}" hint-placeholder-val="{{true}}"><div style="flex: 1 1 0; height: 14px; background: currentColor"></div></sc-if>
+<sc-if value="{{c.off}}" hint-placeholder-val="{{false}}"><div style="flex: 1 1 0; height: 14px; display: flex; align-items: center; justify-content: center"><div style="width: 3px; height: 3px; background: currentColor"></div></div></sc-if>
+</sc-for>
+</div>
+<div style="width: 64px; flex-shrink: 0; text-align: right; font-family: 'Press Start 2P', monospace; font-size: 14px">{{a.fivePct}}</div>
+</div>
+</sc-if>
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 24px; flex-shrink: 0; font-size: 14px">WK</div>
+<div style="flex: 1; display: flex; gap: 3px">
+<sc-for list="{{a.weekCells}}" as="c" hint-placeholder-count="20">
+<sc-if value="{{c.on}}" hint-placeholder-val="{{true}}"><div style="flex: 1 1 0; height: 14px; background: currentColor"></div></sc-if>
+<sc-if value="{{c.off}}" hint-placeholder-val="{{false}}"><div style="flex: 1 1 0; height: 14px; display: flex; align-items: center; justify-content: center"><div style="width: 3px; height: 3px; background: currentColor"></div></div></sc-if>
+</sc-for>
+</div>
+<div style="width: 64px; flex-shrink: 0; text-align: right; font-family: 'Press Start 2P', monospace; font-size: 14px">{{a.weekPct}}</div>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 12px; letter-spacing: 1px">
+<div>{{a.fiveReset}}</div>
+<div>{{a.weekReset}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"amber":{"editor":"color","default":"#E8A33D","options":["#E8A33D","#FFB000","#C98A2E","#F2C14E"]},"showClaude":{"editor":"boolean","default":true,"section":"Agents"},"showCodex":{"editor":"boolean","default":true,"section":"Agents"},"$preview":{"width":412,"height":915}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.resetAt = new Date(Date.now() + (1 * 3600 + 12 * 60 + 45) * 1000);
+    this.timer = setInterval(() => this.setState({ now: new Date() }), 1000);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+  agentData() {
+    return [
+      { key: 'claude', name: 'CLAUDE CODE', mode: 'working', status: 'WORKING', five: 42, week: 61, fiveReset: '5H RESET 2H07M', weekReset: 'WK MON 07:00' },
+      { key: 'codex', name: 'CODEX', mode: 'idle', status: 'IDLE', five: 12, week: 35, fiveReset: '5H RESET 4H31M', weekReset: 'WK SAT 09:00' }
+    ];
+  }
+  cells(pct, n) {
+    const lit = Math.round(pct / 100 * n);
+    const out = [];
+    for (let i = 0; i < n; i++) out.push({ on: i < lit, off: i >= lit });
+    return out;
+  }
+  renderVals() {
+    const d = (this.state && this.state.now) || new Date();
+    const p2 = (x) => String(x).padStart(2, '0');
+    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const mons = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const show = {
+      claude: this.props.showClaude ?? true,
+      codex: this.props.showCodex ?? true
+    };
+    const reset = this.resetAt || new Date(d.getTime() + (1 * 3600 + 12 * 60 + 45) * 1000);
+    const left = Math.max(0, Math.floor((reset.getTime() - d.getTime()) / 1000));
+    const agents = this.agentData().filter((a) => show[a.key]).map((a) => ({
+      name: a.name,
+      status: a.status,
+      filled: a.mode !== 'idle',
+      outline: a.mode === 'idle',
+      blinkCls: a.mode === 'idle' ? '' : 'blink',
+      hasFive: a.five !== null,
+      fivePct: a.five + '%',
+      weekPct: a.week + '%',
+      fiveCells: this.cells(a.five || 0, 20),
+      weekCells: this.cells(a.week, 20),
+      fiveReset: a.five !== null ? a.fiveReset : '',
+      weekReset: a.weekReset
+    }));
+    return {
+      amber: this.props.amber ?? '#E8A33D',
+      time: p2(d.getHours()) + ':' + p2(d.getMinutes()),
+      date: days[d.getDay()] + ' ' + p2(d.getDate()) + ' ' + mons[d.getMonth()] + ' ' + d.getFullYear(),
+      agents: agents,
+      count: agents.length + 1,
+      countdown: p2(Math.floor(left / 3600)) + ':' + p2(Math.floor(left % 3600 / 60)) + ':' + p2(left % 60),
+      resetAt: p2(reset.getHours()) + ':' + p2(reset.getMinutes())
+    };
+  }
+}
+</script>
+</body>
+</html>

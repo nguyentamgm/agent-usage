@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Usage AOD – V2 Minimal preview</title>
+<!--
+  Standalone, offline reference for the V2 "Minimal" always-on screen.
+  Open this file directly in a browser. It reproduces the three design states
+  from the Claude Design canvas with plain HTML/JS (no build step).
+  This file is the visual source of truth for the Android implementation;
+  the numbers are SAMPLE DATA.
+-->
+<style>
+  @font-face { font-family: "Press Start 2P"; src: url("../fonts/PressStart2P-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "Silkscreen"; src: url("../fonts/Silkscreen-Regular.ttf") format("truetype"); }
+
+  :root { --amber: #E8A33D; --black: #000000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #1a1a1a; color: #ddd; font-family: system-ui, sans-serif; }
+  .row { display: flex; gap: 80px; padding: 48px; flex-wrap: wrap; align-items: flex-start; }
+  .label { font-size: 13px; margin: 0 0 12px; color: #aaa; }
+
+  /* ---- the AOD screen (412 x 915 dp reference) ---- */
+  .screen {
+    width: 412px; height: 915px; border-radius: 36px; overflow: hidden;
+    background: var(--black); color: var(--amber);
+    font-family: "Silkscreen", monospace; font-size: 16px; line-height: 16px;
+    padding: 88px 40px 64px; display: flex; flex-direction: column;
+    -webkit-font-smoothing: none; font-kerning: none;
+  }
+  .pixel { font-family: "Press Start 2P", monospace; }
+  .clock { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .clock .time { font-size: 16px; line-height: 16px; }
+  .agents { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 64px; }
+  .agent { display: flex; flex-direction: column; gap: 16px; }
+  .agent .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .status { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; background: currentColor; }
+  .dot.outline { background: transparent; border: 2px solid currentColor; }
+  .hero { display: flex; justify-content: space-between; align-items: flex-end; }
+  .hero .num { font-size: 32px; line-height: 32px; }
+  .bar { position: relative; height: 4px; }
+  .bar .track { position: absolute; left: 0; right: 0; top: 1px; height: 2px;
+    background-image: repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 8px); }
+  .bar .fill { position: absolute; left: 0; top: 0; height: 4px; background: currentColor; }
+  .foot { display: flex; justify-content: space-between; }
+  .blink { animation: blink 1.2s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="row" id="root"></div>
+
+<script>
+// ---------------- sample data (same as the design canvas) ----------------
+const SCREENS = [
+  { title: "01 Overview", agents: [
+    { id: "claude-code", name: "CLAUDE CODE", mode: "working", status: "WORKING", five: 42, week: 61, fiveReset: "2H07M", weekReset: "MON" },
+    { id: "codex", name: "CODEX", mode: "idle", status: "IDLE", five: 12, week: 35, fiveReset: "4H31M", weekReset: "SAT" },
+    { id: "antigravity", name: "ANTIGRAVITY", mode: "idle", status: "IDLE", five: 67, week: 48, fiveReset: "1H22M", weekReset: "TUE" },
+  ]},
+  { title: "02 Near limit", agents: [
+    { id: "claude-code", name: "CLAUDE CODE", mode: "working", status: "WORKING", five: 58, week: 63, fiveReset: "1H49M", weekReset: "MON" },
+    { id: "codex", name: "CODEX", mode: "alert", status: "NEAR LIMIT", five: 91, week: 72, fiveReset: "0H38M", weekReset: "SAT" },
+    { id: "antigravity", name: "ANTIGRAVITY", mode: "idle", status: "IDLE", five: 67, week: 48, fiveReset: "1H22M", weekReset: "TUE" },
+  ]},
+  { title: "03 Limit reached", agents: [
+    { id: "antigravity", name: "ANTIGRAVITY", mode: "limit", limitSecs: 4365, five: 100, week: 48, weekReset: "TUE" },
+    { id: "claude-code", name: "CLAUDE CODE", mode: "working", status: "WORKING", five: 42, week: 61, fiveReset: "2H07M", weekReset: "MON" },
+    { id: "codex", name: "CODEX", mode: "idle", status: "IDLE", five: 12, week: 35, fiveReset: "4H31M", weekReset: "SAT" },
+  ]},
+];
+
+// ---------------- rendering ----------------
+const CONTENT_W = 332;              // 412 - 2 * 40 padding
+const start = Date.now();
+const p2 = (x) => String(x).padStart(2, "0");
+const DAYS = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+const MONS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+// Snap bar width to an even number of px so the edge stays on the pixel grid.
+const barW = (pct) => Math.round(pct / 100 * CONTENT_W / 2) * 2;
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+function agentView(a, now) {
+  let status = a.status, hero = a.five + "%", heroSub = "5H RESET " + a.fiveReset, fill = barW(a.five);
+  if (a.mode === "limit") {
+    const reset = new Date(start + a.limitSecs * 1000);
+    const left = Math.max(0, Math.floor((reset - now) / 1000));
+    status = "BACK " + p2(reset.getHours()) + ":" + p2(reset.getMinutes());
+    hero = p2(Math.floor(left / 3600)) + ":" + p2(Math.floor(left % 3600 / 60)) + ":" + p2(left % 60);
+    heroSub = ""; fill = CONTENT_W;
+  }
+  const root = el("div", "agent");
+  const head = el("div", "head");
+  head.append(el("div", null, a.name));
+  const st = el("div", "status");
+  const dot = el("div", "dot" + (a.mode === "idle" ? " outline" : " blink"));
+  // Keep the blink phase continuous across the 1 s re-render.
+  dot.style.animationDelay = -(now.getTime() % 1200) + "ms";
+  st.append(dot, el("div", null, status));
+  head.append(st);
+  const heroRow = el("div", "hero");
+  heroRow.append(el("div", "num pixel", hero), el("div", null, heroSub));
+  const bar = el("div", "bar");
+  const f = el("div", "fill"); f.style.width = fill + "px";
+  bar.append(el("div", "track"), f);
+  const foot = el("div", "foot");
+  foot.append(el("div", null, "WEEK " + a.week + "%"), el("div", null, "RESETS " + a.weekReset));
+  root.append(head, heroRow, bar, foot);
+  return root;
+}
+
+function render() {
+  const now = new Date();
+  const root = document.getElementById("root");
+  root.replaceChildren();
+  for (const s of SCREENS) {
+    const wrap = el("div");
+    wrap.append(el("p", "label", s.title));
+    const scr = el("div", "screen");
+    const clock = el("div", "clock");
+    clock.append(
+      el("div", "time pixel", p2(now.getHours()) + ":" + p2(now.getMinutes())),
+      el("div", null, DAYS[now.getDay()] + " " + p2(now.getDate()) + " " + MONS[now.getMonth()] + " " + now.getFullYear())
+    );
+    const list = el("div", "agents");
+    s.agents.forEach((a) => list.append(agentView(a, now)));
+    scr.append(clock, list);
+    wrap.append(scr);
+    root.append(wrap);
+  }
+}
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>
